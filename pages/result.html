@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado - CreditScore</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="result-screen">
+        <div class="result-card">
+            <div class="result-header">
+                <div class="logo-mark small">CS</div>
+                <span>Resultado da Avaliação</span>
+            </div>
+            <div class="result-body">
+                <div class="result-avatar" id="userAvatar"></div>
+                <h2 id="resultUserName">Cliente</h2>
+                <div class="result-score">
+                    <div class="score-circle">
+                        <span class="score-value" id="scoreValue">0</span>
+                        <span class="score-label">pontos</span>
+                    </div>
+                </div>
+                <div class="result-status">
+                    <span class="status-badge approved" id="statusBadge">APROVADO</span>
+                </div>
+                <p class="result-message" id="resultMessage">Sua avaliação foi concluída com sucesso.</p>
+                <div class="result-meta">
+                    <div class="meta-item">
+                        <span class="meta-label">Duração</span>
+                        <span class="meta-value" id="durationValue">00:00</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Data</span>
+                        <span class="meta-value" id="dateValue">--</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="meta-label">Protocolo</span>
+                        <span class="meta-value" id="protocolValue">--</span>
+                    </div>
+                </div>
+            </div>
+            <div class="result-footer">
+                <button class="btn-secondary" onclick="goToDashboard()">Voltar ao Início</button>
+                <button class="btn-primary" onclick="window.print()">Imprimir</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const result = localStorage.getItem('assessmentResult');
+            if (!result) {
+                // Show default values if no result
+                return;
+            }
+
+            const data = JSON.parse(result);
+            
+            document.getElementById('resultUserName').textContent = data.userName || 'Cliente';
+            document.getElementById('scoreValue').textContent = data.score || 0;
+            document.getElementById('statusBadge').textContent = data.status || 'PENDENTE';
+            document.getElementById('statusBadge').className = `status-badge ${data.statusClass || 'pending'}`;
+            document.getElementById('resultMessage').textContent = data.message || '';
+            document.getElementById('durationValue').textContent = data.duration || '00:00';
+            document.getElementById('dateValue').textContent = data.date || '--';
+            document.getElementById('protocolValue').textContent = data.protocol || '--';
+
+            if (data.avatar) {
+                document.getElementById('userAvatar').innerHTML = `<img src="${data.avatar}" alt="Avatar">`;
+            }
+        });
+
+        function goToDashboard() {
+            localStorage.removeItem('assessmentResult');
+            window.location.href = 'dashboard.html';
+        }
+    </script>
+</body>
+</html>

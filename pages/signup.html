@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criar Conta - CreditScore</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-screen">
+        <div class="auth-left">
+            <div class="auth-brand">
+                <div class="logo-mark">CS</div>
+                <h1>CreditScore</h1>
+                <p>Avaliação de crédito com análise comportamental em tempo real.</p>
+            </div>
+        </div>
+        <div class="auth-right">
+            <div class="auth-form">
+                <div class="form-header">
+                    <h2>Criar Conta</h2>
+                    <p>Preencha seus dados para começar</p>
+                </div>
+                
+                <div class="form-body">
+                    <div class="input-group">
+                        <label for="signupName">Nome Completo</label>
+                        <input type="text" id="signupName" placeholder="Seu nome completo">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="signupEmail">Email</label>
+                        <input type="email" id="signupEmail" placeholder="seu@email.com">
+                    </div>
+                    
+                    <div class="input-row">
+                        <div class="input-group">
+                            <label for="signupCPF">CPF</label>
+                            <input type="text" id="signupCPF" placeholder="000.000.000-00" maxlength="14">
+                        </div>
+                        <div class="input-group">
+                            <label for="signupPhone">Telefone</label>
+                            <input type="tel" id="signupPhone" placeholder="(00) 00000-0000" maxlength="15">
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="signupPassword">Senha</label>
+                        <input type="password" id="signupPassword" placeholder="Mínimo 6 caracteres">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="signupConfirmPassword">Confirmar Senha</label>
+                        <input type="password" id="signupConfirmPassword" placeholder="Repita a senha">
+                    </div>
+
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="acceptTerms">
+                        <span>Concordo com os <a href="#">Termos de Uso</a> e <a href="#">Política de Privacidade</a></span>
+                    </label>
+                </div>
+                
+                <div class="form-footer">
+                    <button class="btn-primary full" onclick="handleSignup()">
+                        Criar Conta
+                    </button>
+                    <p class="auth-switch">
+                        Já tem uma conta? <a href="signin.html">Entrar</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/auth.js"></script>
+</body>
+</html>

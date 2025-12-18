@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliação - CreditScore</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="main-header">
+        <div class="header-brand">
+            <div class="logo-mark small">CS</div>
+            <span>Avaliação em Andamento</span>
+        </div>
+        <div class="header-info">
+            <div class="recording-badge">
+                <span class="rec-dot"></span>
+                <span>GRAVANDO</span>
+            </div>
+            <div class="timer-badge" id="recordingTimer">00:00</div>
+        </div>
+    </div>
+    
+    <div class="split-container">
+        <div class="video-panel">
+            <div class="video-frame">
+                <video id="userVideo" autoplay muted playsinline></video>
+                <div class="face-overlay">
+                    <div class="face-guide"></div>
+                </div>
+                <div class="scan-line"></div>
+                <div class="corner-marker top-left"></div>
+                <div class="corner-marker top-right"></div>
+                <div class="corner-marker bottom-left"></div>
+                <div class="corner-marker bottom-right"></div>
+                <div class="video-status-overlay" id="videoStatus">
+                    <span>Posicione seu rosto no centro</span>
+                </div>
+                <div class="countdown-overlay" id="countdownOverlay">
+                    <div class="countdown-circle">
+                        <span id="countdownValue">5</span>
+                    </div>
+                    <p>Preparando gravacao...</p>
+                </div>
+            </div>
+            <div class="video-controls">
+                <button class="control-btn" id="toggleCamera" title="Câmera">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 7l-7 5 7 5V7z"/>
+                        <rect x="1" y="5" width="15" height="14" rx="2"/>
+                    </svg>
+                </button>
+                <button class="control-btn" id="toggleMic" title="Microfone">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                        <line x1="12" y1="19" x2="12" y2="23"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="recording-actions">
+                <button class="btn-primary finish-recording-btn" id="finishRecordingBtn" style="display: none;" disabled>Concluir gravacao</button>
+                <span class="hint-text" id="minimumTimerHint">Disponivel apos 5 minutos de gravacao</span>
+            </div>
+            <div class="recording-review" id="recordingReview">
+                <video id="recordedPlayback" controls loop playsinline></video>
+                <a id="downloadRecording" class="btn-secondary download-recording" href="#" download="gravacao-credit-score.webm" style="display: none;">Baixar gravacao</a>
+            </div>
+        </div>
+
+        <div class="quiz-panel">
+            <div class="quiz-header">
+                <div class="quiz-progress">
+                    <span class="progress-label">Progresso</span>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <span class="progress-text" id="progressText">1/7</span>
+                </div>
+            </div>
+            <div class="quiz-content" id="quizContent"></div>
+            <div class="quiz-footer">
+                <button class="btn-secondary" id="prevBtn" onclick="previousQuestion()" disabled>Anterior</button>
+                <button class="btn-primary" id="nextBtn" onclick="nextQuestion()">Próxima</button>
+                <button class="btn-primary" id="submitBtn" onclick="submitQuiz()" style="display: none;">Finalizar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/assessment.js"></script>
+</body>
+</html>
