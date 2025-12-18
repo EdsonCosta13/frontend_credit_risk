@@ -472,11 +472,15 @@ body {
     width: 100%;
     height: calc(100vh - 56px);
     margin-top: 56px;
+    gap: 24px;
+    align-items: stretch;
+    flex-wrap: nowrap;
 }
 
 /* Video Panel */
 .video-panel {
     flex: 1;
+    min-width: 0;
     background: var(--bg-dark);
     display: flex;
     flex-direction: column;
@@ -595,6 +599,73 @@ body {
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
+.recording-chip {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    background: rgba(0, 0, 0, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    pointer-events: none;
+}
+
+.recording-chip .chip-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    animation: pulse 1.5s infinite;
+}
+
+.recording-chip.recording {
+    border-color: rgba(255, 82, 82, 0.4);
+    color: var(--danger);
+}
+
+.recording-chip.recording .chip-dot {
+    background: var(--danger);
+}
+
+.recording-chip.countdown {
+    border-color: rgba(255, 179, 0, 0.4);
+    color: var(--warning);
+}
+
+.recording-chip.countdown .chip-dot {
+    background: var(--warning);
+    animation: none;
+}
+
+.recording-chip.finished {
+    border-color: rgba(0, 200, 83, 0.4);
+    color: var(--success);
+}
+
+.recording-chip.finished .chip-dot {
+    background: var(--success);
+    animation: none;
+}
+
+.recording-chip.idle {
+    border-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+}
+
+.recording-chip.idle .chip-dot {
+    background: var(--text-muted);
+    animation: none;
+}
+
 .recording-actions {
     display: flex;
     flex-direction: column;
@@ -682,6 +753,9 @@ body {
 /* Quiz Panel */
 .quiz-panel {
     width: 440px;
+    flex: 0 0 440px;
+    height: calc(100vh - 56px);
+    overflow-y: auto;
     background: var(--bg-card);
     display: flex;
     flex-direction: column;
@@ -994,21 +1068,6 @@ body {
 @media (max-width: 900px) {
     .auth-left {
         display: none;
-    }
-    
-    .split-container {
-        flex-direction: column;
-    }
-    
-    .video-panel {
-        height: 45%;
-    }
-    
-    .quiz-panel {
-        width: 100%;
-        height: 55%;
-        border-left: none;
-        border-top: 1px solid var(--border);
     }
 }
 

@@ -8,17 +8,12 @@ class AssessmentManager {
         this.mediaRecorder = null;
         this.recordedChunks = [];
         this.recordingStartTime = null;
-        if (this.mediaRecorder) {
-            this.mediaRecorder.onstop = null;
-            this.mediaRecorder = null;
-        }
         this.timerInterval = null;
         this.countdownInterval = null;
         this.countdownDuration = 5;
         this.countdownValue = 5;
-        this.minimumRecordingMs = 5 * 60 * 1000;
-        this.canFinishRecording = false;
         this.hasCompletedRecording = false;
+        this.isRecordingActive = false;
         this.recordingUrl = null;
         this.recordingMimeType = null;
         this.isCameraOn = true;
@@ -119,6 +114,7 @@ class AssessmentManager {
 
         this.hideRecordingReview();
         this.resetFinishButton();
+        this.updateRecordingChip('idle', 'Inicializando camera');
 
         // Start camera
         await this.startCamera();
@@ -156,6 +152,10 @@ class AssessmentManager {
 
             this.updateVideoStatus('Permita o acesso a camera e microfone para continuar.');
 
+            this.updateRecordingChip('idle', 'Permissao necessaria');
+
+            this.updateRecordingHint('Permita o acesso a camera e microfone para iniciar.');
+
             alert('Nao foi possivel acessar a camera. Permita o acesso e tente novamente.');
 
         }
@@ -172,7 +172,7 @@ class AssessmentManager {
 
         this.hasCompletedRecording = false;
 
-        this.canFinishRecording = false;
+        this.isRecordingActive = false;
 
         this.countdownValue = this.countdownDuration;
 
@@ -191,6 +191,10 @@ class AssessmentManager {
         this.resetFinishButton();
 
         this.hideRecordingReview();
+
+        this.updateRecordingHint('Prepare-se, a gravacao iniciara em instantes.');
+
+        this.updateRecordingChip('countdown', 'Preparando...');
 
         this.startCountdown();
 
@@ -222,6 +226,8 @@ class AssessmentManager {
 
         overlay.classList.add('visible');
 
+        this.updateRecordingChip('countdown', `Gravacao inicia em ${this.countdownValue}s`);
+
         this.countdownInterval = setInterval(() => {
 
             this.countdownValue -= 1;
@@ -229,6 +235,8 @@ class AssessmentManager {
             if (this.countdownValue > 0) {
 
                 valueEl.textContent = this.countdownValue;
+
+                this.updateRecordingChip('countdown', `Gravacao inicia em ${this.countdownValue}s`);
 
             } else {
 
@@ -276,17 +284,7 @@ class AssessmentManager {
 
         }
 
-        const hint = document.getElementById('minimumTimerHint');
-
-        if (hint) {
-
-            hint.style.display = 'block';
-
-            hint.textContent = 'Disponivel apos 5 minutos de gravacao';
-
-        }
-
-        this.canFinishRecording = false;
+        this.updateRecordingHint('Aguardando inicio da gravacao...');
 
     }
 
@@ -334,8 +332,6 @@ class AssessmentManager {
 
     showFinishRecordingButton() {
 
-        this.canFinishRecording = true;
-
         const btn = document.getElementById('finishRecordingBtn');
 
         if (btn) {
@@ -344,11 +340,57 @@ class AssessmentManager {
 
             btn.disabled = false;
 
+            btn.textContent = 'Concluir gravacao';
+
         }
+
+        this.updateRecordingHint('Clique em "Concluir gravacao" quando terminar.');
+
+    }
+
+
+
+    updateRecordingHint(message) {
 
         const hint = document.getElementById('minimumTimerHint');
 
-        if (hint) hint.textContent = 'Voce pode concluir a gravacao quando estiver pronto.';
+        if (!hint) return;
+
+        if (!message) {
+
+            hint.style.display = 'none';
+
+            hint.textContent = '';
+
+            return;
+
+        }
+
+        hint.style.display = 'block';
+
+        hint.textContent = message;
+
+    }
+
+
+
+    updateRecordingChip(state, message) {
+
+        const chip = document.getElementById('recordingChip');
+
+        const text = document.getElementById('recordingChipText');
+
+        if (!chip || !text) return;
+
+        chip.classList.remove('recording', 'countdown', 'finished', 'idle');
+
+        const allowed = ['recording', 'countdown', 'finished', 'idle'];
+
+        const nextState = allowed.includes(state) ? state : 'idle';
+
+        chip.classList.add(nextState);
+
+        if (message) text.textContent = message;
 
     }
 
@@ -382,15 +424,15 @@ class AssessmentManager {
 
     finalizeRecording() {
 
-        if (!this.canFinishRecording) {
+        if (this.hasCompletedRecording) return;
 
-            alert('A gravacao precisa ter no minimo 5 minutos para ser concluida.');
+        if (!this.isRecordingActive || !this.mediaRecorder) {
+
+            alert('A gravacao ainda nao iniciou.');
 
             return;
 
         }
-
-        if (this.hasCompletedRecording) return;
 
         const btn = document.getElementById('finishRecordingBtn');
 
@@ -404,7 +446,11 @@ class AssessmentManager {
 
         this.updateVideoStatus('Finalizando gravacao...');
 
-        if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+        this.updateRecordingHint('Finalizando gravacao...');
+
+        this.updateRecordingChip('recording', 'Finalizando...');
+
+        if (this.mediaRecorder.state === 'recording') {
 
             this.mediaRecorder.stop();
 
@@ -430,6 +476,16 @@ class AssessmentManager {
 
         this.recordingStartTime = null;
 
+        this.isRecordingActive = false;
+
+        if (this.mediaRecorder) {
+
+            this.mediaRecorder.onstop = null;
+
+            this.mediaRecorder = null;
+
+        }
+
         const btn = document.getElementById('finishRecordingBtn');
 
         if (btn) {
@@ -442,9 +498,7 @@ class AssessmentManager {
 
         }
 
-        const hint = document.getElementById('minimumTimerHint');
-
-        if (hint) hint.textContent = 'Gravacao salva localmente. Continue a avaliacao.';
+        this.updateRecordingHint('Gravacao salva localmente. Continue a avaliacao.');
 
 
 
@@ -507,9 +561,7 @@ class AssessmentManager {
 
 
         this.hasCompletedRecording = true;
-
-        this.canFinishRecording = false;
-
+        this.updateRecordingChip('finished', 'Gravacao finalizada');
         this.updateVideoStatus('<span style="color:#00C853;">Gravacao finalizada</span>');
 
     }
@@ -546,7 +598,13 @@ class AssessmentManager {
 
             this.recordingStartTime = Date.now();
 
+            this.isRecordingActive = true;
+
+            this.updateRecordingChip('recording', 'Gravando agora');
+
             this.updateVideoStatus('<span style="color:#FF5252;">Gravando</span>');
+
+            this.showFinishRecordingButton();
 
             this.startTimer();
 
@@ -562,18 +620,25 @@ class AssessmentManager {
 
 
     startTimer() {
+
         if (this.timerInterval) clearInterval(this.timerInterval);
+
         this.timerInterval = setInterval(() => {
+
             if (!this.recordingStartTime) return;
+
             const elapsed = Date.now() - this.recordingStartTime;
+
             const min = Math.floor(elapsed / 60000);
+
             const sec = Math.floor((elapsed % 60000) / 1000);
+
             const el = document.getElementById('recordingTimer');
+
             if (el) el.textContent = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
-            if (!this.canFinishRecording && elapsed >= this.minimumRecordingMs) {
-                this.showFinishRecordingButton();
-            }
+
         }, 1000);
+
     }
 
     stopRecording() {
@@ -584,6 +649,14 @@ class AssessmentManager {
         }
         this.clearCountdown();
         if (this.stream) this.stream.getTracks().forEach(t => t.stop());
+        this.isRecordingActive = false;
+        if (this.hasCompletedRecording) {
+            this.updateRecordingChip('finished', 'Gravacao finalizada');
+            this.updateRecordingHint('Gravacao finalizada. Continue a avaliacao.');
+        } else {
+            this.updateRecordingChip('idle', 'Camera pausada');
+            this.updateRecordingHint('Camera pausada.');
+        }
     }
 
     toggleCamera() {

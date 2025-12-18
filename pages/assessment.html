@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Avaliação - CreditScore</title>
+    <title>Avaliador de Confiança de Crédito</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
@@ -43,6 +43,10 @@
                     </div>
                     <p>Preparando gravacao...</p>
                 </div>
+                <div class="recording-chip idle" id="recordingChip">
+                    <span class="chip-dot"></span>
+                    <span id="recordingChipText">Aguardando camera</span>
+                </div>
             </div>
             <div class="video-controls">
                 <button class="control-btn" id="toggleCamera" title="Câmera">
@@ -61,7 +65,7 @@
             </div>
             <div class="recording-actions">
                 <button class="btn-primary finish-recording-btn" id="finishRecordingBtn" style="display: none;" disabled>Concluir gravacao</button>
-                <span class="hint-text" id="minimumTimerHint">Disponivel apos 5 minutos de gravacao</span>
+                <span class="hint-text" id="minimumTimerHint">Aguardando inicio da gravacao...</span>
             </div>
             <div class="recording-review" id="recordingReview">
                 <video id="recordedPlayback" controls loop playsinline></video>
