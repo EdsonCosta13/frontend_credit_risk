@@ -18,6 +18,19 @@ class AssessmentManager {
         this.recordingMimeType = null;
         this.isCameraOn = true;
         this.isMicOn = true;
+        this.quizStarted = false;
+        this.sessionId = null;
+        this.currentQuestionData = null;
+        this.selectedAnswer = null;
+        this.totalQuestions = null;
+        this.remainingQuestions = null;
+        this.questionsAnswered = 0;
+        this.quizScore = 0;
+        this.quizRiskLevel = 'desconhecido';
+        this.quizHistory = [];
+        this.isLoadingQuestion = false;
+        this.pendingResultData = null;
+        this.apiBase = 'http://localhost:8000';
         this.currentUser = null;
 
         this.questions = [
@@ -111,6 +124,7 @@ class AssessmentManager {
         document.getElementById('toggleCamera')?.addEventListener('click', () => this.toggleCamera());
         document.getElementById('toggleMic')?.addEventListener('click', () => this.toggleMic());
         document.getElementById('finishRecordingBtn')?.addEventListener('click', () => this.finalizeRecording());
+        document.getElementById('startQuizBtn')?.addEventListener('click', () => this.startQuiz());
 
         this.hideRecordingReview();
         this.resetFinishButton();
@@ -138,8 +152,6 @@ class AssessmentManager {
 
             if (userVideo) userVideo.srcObject = this.stream;
 
-            this.renderQuestion();
-
             this.prepareRecordingFlow();
 
             this.updateVideoStatus('<span style="color:#00C853;">Camera ativa</span>');
@@ -159,6 +171,156 @@ class AssessmentManager {
             alert('Nao foi possivel acessar a camera. Permita o acesso e tente novamente.');
 
         }
+
+    }
+
+    handleQuizCompletion() {
+
+        this.quizStarted = false;
+
+        this.currentQuestionData = null;
+
+        this.remainingQuestions = 0;
+
+        this.renderQuestion();
+
+        const overlay = document.getElementById('quizStartOverlay');
+
+        if (overlay) {
+
+            overlay.classList.remove('hidden');
+
+            const title = overlay.querySelector('h2');
+
+            const desc = overlay.querySelector('p');
+
+            const btn = overlay.querySelector('button');
+
+            if (title) title.textContent = 'Questionario concluido';
+
+            if (desc) desc.textContent = 'Estamos finalizando sua avaliacao...';
+
+            if (btn) btn.style.display = 'none';
+
+        }
+
+        this.tryFinalizeAssessment();
+
+    }
+
+    tryFinalizeAssessment() {
+
+        if (!this.pendingResultData) return;
+
+        if (!this.hasCompletedRecording) {
+
+            this.updateRecordingHint('Finalize a gravacao para enviar sua avaliacao.');
+
+            return;
+
+        }
+
+        this.generateResultAndRedirect(this.pendingResultData);
+
+        this.pendingResultData = null;
+
+    }
+
+    generateResultAndRedirect(apiData) {
+
+        const pct = Math.max(0, Math.min(100, Math.round(apiData?.updatedScore ?? this.quizScore ?? 0)));
+
+        const risk = (apiData?.inferredRiskLevel || this.quizRiskLevel || '').toLowerCase();
+
+        const statusMeta = this.getStatusFromRiskLevel(risk);
+
+        const duration = document.getElementById('recordingTimer')?.textContent || '00:00';
+
+        const now = new Date();
+
+        const protocol = `CS${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
+
+        const avatar = this.captureAvatar();
+
+        const result = {
+
+            userName: this.currentUser?.name || 'Cliente',
+
+            score: pct,
+
+            status: statusMeta.status,
+
+            statusClass: statusMeta.statusClass,
+
+            message: statusMeta.message,
+
+            duration,
+
+            date: now.toLocaleDateString('pt-BR'),
+
+            protocol,
+
+            avatar
+
+        };
+
+        localStorage.setItem('assessmentResult', JSON.stringify(result));
+
+        const history = JSON.parse(localStorage.getItem('assessmentHistory') || '[]');
+
+        history.unshift(result);
+
+        localStorage.setItem('assessmentHistory', JSON.stringify(history));
+
+        window.location.href = 'result.html';
+
+    }
+
+    getStatusFromRiskLevel(risk) {
+
+        const mapping = {
+
+            baixo: {
+
+                status: 'APROVADO',
+
+                statusClass: 'approved',
+
+                message: 'Perfil considerado de baixo risco. Parabens!'
+
+            },
+
+            medio: {
+
+                status: 'EM ANALISE',
+
+                statusClass: 'pending',
+
+                message: 'Seu perfil sera avaliado por nossa equipe especializada.'
+
+            },
+
+            alto: {
+
+                status: 'NAO APROVADO',
+
+                statusClass: 'rejected',
+
+                message: 'Identificamos risco elevado para concessao neste momento.'
+
+            }
+
+        };
+
+        return mapping[risk] || {
+
+            status: 'EM ANALISE',
+
+            statusClass: 'pending',
+
+            message: 'Seu questionario foi recebido e esta em avaliacao.'
+
+        };
 
     }
 
@@ -462,6 +624,168 @@ class AssessmentManager {
 
     }
 
+    async startQuiz() {
+
+        if (this.quizStarted) return;
+
+        const btn = document.getElementById('startQuizBtn');
+
+        if (btn) {
+
+            btn.disabled = true;
+
+            btn.textContent = 'Iniciando...';
+
+        }
+
+        try {
+
+            const response = await fetch(`${this.apiBase}/quiz/start`, { method: 'GET' });
+
+            if (!response.ok) throw new Error('Erro ao iniciar quiz');
+
+            const data = await response.json();
+
+            this.sessionId = data.sessionId;
+
+            localStorage.setItem('quizSessionId', this.sessionId);
+
+            this.questionsAnswered = 0;
+            this.totalQuestions = null;
+            this.remainingQuestions = null;
+            this.quizHistory = [];
+            this.selectedAnswer = null;
+            this.currentQuestionData = null;
+            this.pendingResultData = null;
+
+            this.quizStarted = true;
+
+            const overlay = document.getElementById('quizStartOverlay');
+
+            if (overlay) overlay.classList.add('hidden');
+
+            await this.requestNextQuestion();
+
+        } catch (error) {
+
+            console.error('Erro ao iniciar quiz:', error);
+
+            alert('Nao foi possivel iniciar o quiz. Tente novamente.');
+
+            this.quizStarted = false;
+
+        } finally {
+
+            if (btn) {
+
+                btn.disabled = false;
+
+                btn.textContent = 'Iniciar quiz';
+
+            }
+
+        }
+
+    }
+
+    async requestNextQuestion(payload = {}) {
+
+        if (!this.sessionId) {
+
+            alert('Sessao do quiz nao encontrada. Inicie novamente.');
+
+            return;
+
+        }
+
+        const answered = typeof payload.answer !== 'undefined';
+
+        const body = {
+
+            sessionId: this.sessionId,
+
+            ...payload
+
+        };
+
+        this.isLoadingQuestion = true;
+
+        this.updateNavButtons();
+
+        try {
+
+            const response = await fetch(`${this.apiBase}/quiz/answer`, {
+
+                method: 'POST',
+
+                headers: { 'Content-Type': 'application/json' },
+
+                body: JSON.stringify(body)
+
+            });
+
+            if (!response.ok) throw new Error('Falha ao obter questao.');
+
+            const data = await response.json();
+
+            if (answered) {
+
+                this.questionsAnswered += 1;
+
+                this.quizHistory.push({
+
+                    questionId: payload.questionId,
+
+                    answer: payload.answer
+
+                });
+
+            }
+
+            if (typeof data.updatedScore === 'number') this.quizScore = data.updatedScore;
+
+            if (data.inferredRiskLevel) this.quizRiskLevel = data.inferredRiskLevel;
+
+            if (typeof data.remainingQuestions === 'number') {
+
+                this.remainingQuestions = data.remainingQuestions;
+
+                this.totalQuestions = this.questionsAnswered + this.remainingQuestions + 1;
+
+            }
+
+            this.selectedAnswer = null;
+
+            if (data.quizCompleted || !data.nextQuestion) {
+
+                this.pendingResultData = data;
+
+                this.handleQuizCompletion();
+
+            } else {
+
+                this.currentQuestionData = data.nextQuestion;
+
+                this.renderQuestion();
+
+            }
+
+        } catch (error) {
+
+            console.error('Erro ao carregar questao:', error);
+
+            alert('Nao foi possivel carregar a proxima questao. Tente novamente.');
+
+        } finally {
+
+            this.isLoadingQuestion = false;
+
+            this.updateNavButtons();
+
+        }
+
+    }
+
 
 
     handleRecordingCompleted() {
@@ -563,6 +887,7 @@ class AssessmentManager {
         this.hasCompletedRecording = true;
         this.updateRecordingChip('finished', 'Gravacao finalizada');
         this.updateVideoStatus('<span style="color:#00C853;">Gravacao finalizada</span>');
+        this.tryFinalizeAssessment();
 
     }
 
@@ -680,42 +1005,65 @@ class AssessmentManager {
     }
 
     renderQuestion() {
-        const q = this.questions[this.currentQuestion];
         const container = document.getElementById('quizContent');
-        const existing = this.answers.find(a => a.questionId === q.id);
+        if (!container) return;
 
-        const optionsHtml = q.options.map(opt => `
-            <div class="option-item ${existing?.value === opt.value ? 'selected' : ''}" 
-                 onclick="assessment.selectOption(${q.id}, '${opt.value}', ${opt.score})">
+        if (!this.currentQuestionData) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <p>${this.quizStarted ? 'Carregando proxima pergunta...' : 'Clique em "Iniciar quiz" para comecar.'}</p>
+                </div>
+            `;
+            this.updateProgress();
+            this.updateNavButtons();
+            return;
+        }
+
+        const total = this.computeTotalQuestions();
+        const currentIndex = this.questionsAnswered + 1;
+        const options = Array.isArray(this.currentQuestionData.options) ? this.currentQuestionData.options : [];
+
+        const optionsHtml = options.map((opt, index) => `
+            <div class="option-item ${this.selectedAnswer === opt ? 'selected' : ''}" 
+                 onclick="assessment.selectOption(${index})">
                 <div class="option-radio"></div>
-                <span class="option-text">${opt.text}</span>
+                <span class="option-text">${opt}</span>
             </div>
         `).join('');
 
         container.innerHTML = `
             <div class="question-container">
-                <div class="question-number">Questão ${this.currentQuestion + 1} de ${this.questions.length}</div>
-                <div class="question-text">${q.text}</div>
+                <div class="question-number">Questao ${currentIndex} de ${total}</div>
+                <div class="question-text">${this.currentQuestionData.text || ''}</div>
                 <div class="options-list">${optionsHtml}</div>
             </div>
         `;
 
-        this.updateProgress();
+        this.updateProgress(total, currentIndex);
         this.updateNavButtons();
     }
 
-    selectOption(questionId, value, score) {
-        this.answers = this.answers.filter(a => a.questionId !== questionId);
-        this.answers.push({ questionId, value, score });
+    computeTotalQuestions() {
+        if (this.totalQuestions) return this.totalQuestions;
+        const remaining = typeof this.remainingQuestions === 'number' ? this.remainingQuestions : 0;
+        const base = this.currentQuestionData ? 1 : 0;
+        return Math.max(1, this.questionsAnswered + remaining + base);
+    }
+
+    selectOption(optionIndex) {
+        if (!this.currentQuestionData) return;
+        const optionValue = this.currentQuestionData.options?.[optionIndex];
+        if (!optionValue) return;
+        this.selectedAnswer = optionValue;
         this.renderQuestion();
     }
 
-    updateProgress() {
-        const pct = ((this.currentQuestion + 1) / this.questions.length) * 100;
+    updateProgress(total = this.computeTotalQuestions(), currentIndex = this.quizStarted ? this.questionsAnswered + 1 : 0) {
+        const pct = total ? (currentIndex / total) * 100 : 0;
         const fill = document.getElementById('progressFill');
         const text = document.getElementById('progressText');
         if (fill) fill.style.width = `${pct}%`;
-        if (text) text.textContent = `${this.currentQuestion + 1}/${this.questions.length}`;
+        if (text) text.textContent = total ? `${currentIndex}/${total}` : '0/0';
     }
 
     updateNavButtons() {
@@ -723,100 +1071,57 @@ class AssessmentManager {
         const next = document.getElementById('nextBtn');
         const submit = document.getElementById('submitBtn');
 
-        if (prev) prev.disabled = this.currentQuestion === 0;
+        if (prev) {
+            prev.disabled = true;
+            prev.style.visibility = 'hidden';
+        }
 
-        const isLast = this.currentQuestion === this.questions.length - 1;
-        if (next) next.style.display = isLast ? 'none' : 'block';
-        if (submit) submit.style.display = isLast ? 'block' : 'none';
+        if (next) {
+            if (!this.currentQuestionData) {
+                next.disabled = true;
+                next.textContent = 'Aguardando...';
+            } else {
+                next.style.display = 'block';
+                next.disabled = this.isLoadingQuestion || !this.selectedAnswer;
+                next.textContent = this.remainingQuestions === 0 ? 'Enviar e finalizar' : 'Enviar resposta';
+            }
+        }
+
+        if (submit) submit.style.display = 'none';
     }
 
     nextQuestion() {
-        const q = this.questions[this.currentQuestion];
-        if (!this.answers.some(a => a.questionId === q.id)) {
-            alert('Selecione uma opção.');
-            return;
-        }
-        if (this.currentQuestion < this.questions.length - 1) {
-            this.currentQuestion++;
-            this.renderQuestion();
-        }
+        this.submitCurrentAnswer();
     }
 
     previousQuestion() {
-        if (this.currentQuestion > 0) {
-            this.currentQuestion--;
-            this.renderQuestion();
+        alert('Nao e possivel voltar perguntas neste formato.');
+    }
+
+    async submitCurrentAnswer() {
+        if (!this.quizStarted || !this.currentQuestionData) {
+            alert('Inicie o quiz para responder.');
+            return;
         }
+        if (!this.selectedAnswer) {
+            alert('Selecione uma opcao.');
+            return;
+        }
+        await this.requestNextQuestion({
+            questionId: this.currentQuestionData.id,
+            answer: this.selectedAnswer,
+            currentScore: this.quizScore || 0,
+            history: this.quizHistory
+        });
     }
 
     submitQuiz() {
-        if (this.answers.length < this.questions.length) {
-            alert('Responda todas as questões.');
+        if (this.pendingResultData && this.hasCompletedRecording) {
+            this.generateResultAndRedirect(this.pendingResultData);
+            this.pendingResultData = null;
             return;
         }
-
-
-        if (!this.hasCompletedRecording) {
-
-            alert('Conclua a gravacao de video antes de finalizar.');
-
-            return;
-
-        }
-
-
-
-        
-        // Calculate result
-        const total = this.answers.reduce((s, a) => s + a.score, 0);
-        const max = this.questions.reduce((s, q) => s + Math.max(...q.options.map(o => o.score)), 0);
-        const pct = Math.round((total / max) * 100);
-
-        let status, statusClass, message;
-        if (pct >= 70) {
-            status = 'APROVADO';
-            statusClass = 'approved';
-            message = 'Parabéns! Seu perfil foi aprovado para análise de crédito.';
-        } else if (pct >= 50) {
-            status = 'EM ANÁLISE';
-            statusClass = 'pending';
-            message = 'Seu perfil será analisado pela equipe especializada.';
-        } else {
-            status = 'NÃO APROVADO';
-            statusClass = 'rejected';
-            message = 'Seu perfil não atende aos critérios atuais.';
-        }
-
-        const duration = document.getElementById('recordingTimer')?.textContent || '00:00';
-        const now = new Date();
-        const protocol = `CS${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`;
-
-        // Capture avatar
-        const avatar = this.captureAvatar();
-
-        // Save result
-        const result = {
-            userName: this.currentUser?.name || 'Cliente',
-            score: pct,
-            status,
-            statusClass,
-            message,
-            duration,
-            date: now.toLocaleDateString('pt-BR'),
-            protocol,
-            avatar
-        };
-
-        // Save to current result
-        localStorage.setItem('assessmentResult', JSON.stringify(result));
-        
-        // Save to history
-        const history = JSON.parse(localStorage.getItem('assessmentHistory') || '[]');
-        history.unshift(result);
-        localStorage.setItem('assessmentHistory', JSON.stringify(history));
-        
-        this.stopRecording();
-        window.location.href = 'result.html';
+        alert('Finalize o questionario e a gravacao para enviar.');
     }
 
     captureAvatar() {

@@ -74,13 +74,20 @@
         </div>
 
         <div class="quiz-panel">
+            <div class="quiz-start-overlay" id="quizStartOverlay">
+                <div class="quiz-start-card">
+                    <h2>Inicie o questionário</h2>
+                    <p>Quando estiver pronto, clique no botão abaixo para começar a responder.</p>
+                    <button class="btn-primary large" id="startQuizBtn">Iniciar quiz</button>
+                </div>
+            </div>
             <div class="quiz-header">
                 <div class="quiz-progress">
                     <span class="progress-label">Progresso</span>
                     <div class="progress-bar">
                         <div class="progress-fill" id="progressFill"></div>
                     </div>
-                    <span class="progress-text" id="progressText">1/7</span>
+                    <span class="progress-text" id="progressText">0/0</span>
                 </div>
             </div>
             <div class="quiz-content" id="quizContent"></div>
