@@ -74,11 +74,35 @@
 
         <div class="quiz-panel">
             <div class="quiz-start-overlay" id="quizStartOverlay">
-                <div class="quiz-start-card">
+                <div class="quiz-start-card" id="quizStartCard">
                     <h2>Inicie o question√°rio</h2>
                     <p>Quando estiver pronto, clique no bot√£o abaixo para come√ßar a responder.</p>
                     <button class="btn-primary large" id="startQuizBtn">Iniciar quiz</button>
                 </div>
+                <div class="quiz-summary-card" id="quizSummaryCard">
+                    <div class="summary-headline">
+                        <div>
+                            <span class="summary-label">Pontua«ıo final</span>
+                            <div class="summary-score" id="summaryScore">--</div>
+                        </div>
+                        <span class="summary-risk" id="summaryRisk">Risco --</span>
+                    </div>
+                    <div class="summary-section">
+                        <h3>Resumo da avalia«ı«úo</h3>
+                        <p class="summary-history" id="summaryHistory">Resumo nao disponivel.</p>
+                    </div>
+                    <div class="summary-section">
+                        <h3>Recomenda«ı«úes</h3>
+                        <ul id="summaryRecommendations">
+                            <li>Sem recomenda«ı«úes adicionais.</li>
+                        </ul>
+                    </div>
+                    <p class="summary-note" id="summaryNote" style="display: none;"></p>
+                </div>
+            </div>
+            <div class="quiz-loading-indicator" id="quizLoadingIndicator">
+                <div class="loading-spinner"></div>
+                <p id="quizLoadingText">Carregando...</p>
             </div>
             <div class="quiz-header">
                 <div class="quiz-progress">

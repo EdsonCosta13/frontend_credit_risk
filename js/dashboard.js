@@ -140,7 +140,6 @@ function filterAssessments() {
     renderAssessments();
 }
 
-// Modal: Nova Avaliação
 function openNewAssessmentModal() {
     document.getElementById('newAssessmentModal').classList.add('show');
 }
@@ -153,7 +152,6 @@ function startAssessment() {
     window.location.href = 'assessment.html';
 }
 
-// Modal: Detalhes
 function viewAssessment(protocol) {
     selectedAssessment = assessments.find(a => a.protocol === protocol);
     if (!selectedAssessment) return;
@@ -215,7 +213,6 @@ function printAssessment() {
     window.open('result.html', '_blank');
 }
 
-// Close modals on overlay click
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
     overlay.addEventListener('click', (e) => {
         if (e.target === overlay) {

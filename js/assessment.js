@@ -29,6 +29,8 @@ class AssessmentManager {
         this.quizRiskLevel = 'desconhecido';
         this.quizHistory = [];
         this.isLoadingQuestion = false;
+        this.isSubmittingAnswer = false;
+        this.evaluationSummary = null;
         this.pendingResultData = null;
         this.apiBase = 'http://localhost:8000';
         this.currentUser = null;
@@ -190,6 +192,22 @@ class AssessmentManager {
 
             overlay.classList.remove('hidden');
 
+        }
+
+        const summaryData = this.pendingResultData?.evaluationSummary || this.evaluationSummary;
+
+        if (summaryData) {
+
+            this.renderEvaluationSummary(summaryData);
+
+            this.updateSummaryNote(this.hasCompletedRecording
+
+                ? 'Gravacao concluida. Finalizando avaliacao...'
+
+                : 'Finalize a gravacao para concluir sua avaliacao.');
+
+        } else if (overlay) {
+
             const title = overlay.querySelector('h2');
 
             const desc = overlay.querySelector('p');
@@ -216,7 +234,19 @@ class AssessmentManager {
 
             this.updateRecordingHint('Finalize a gravacao para enviar sua avaliacao.');
 
+            if (this.evaluationSummary) {
+
+                this.updateSummaryNote('Finalize a gravacao para concluir sua avaliacao.');
+
+            }
+
             return;
+
+        }
+
+        if (this.evaluationSummary) {
+
+            this.updateSummaryNote('Gerando resultado final...');
 
         }
 
@@ -228,9 +258,14 @@ class AssessmentManager {
 
     generateResultAndRedirect(apiData) {
 
-        const pct = Math.max(0, Math.min(100, Math.round(apiData?.updatedScore ?? this.quizScore ?? 0)));
+        const summary = apiData?.evaluationSummary || this.evaluationSummary;
 
-        const risk = (apiData?.inferredRiskLevel || this.quizRiskLevel || '').toLowerCase();
+        const summaryScore = typeof summary?.finalScore === 'number' ? summary.finalScore : null;
+        const fallbackScore = typeof apiData?.updatedScore === 'number' ? apiData.updatedScore : this.quizScore;
+        const pct = Math.max(0, Math.min(100, Math.round(summaryScore ?? fallbackScore ?? 0)));
+
+        const derivedRisk = summary?.inferredRiskLevel || apiData?.inferredRiskLevel || this.quizRiskLevel || '';
+        const risk = (derivedRisk || '').toLowerCase();
 
         const statusMeta = this.getStatusFromRiskLevel(risk);
 
@@ -263,6 +298,24 @@ class AssessmentManager {
             avatar
 
         };
+
+        if (summary?.historySummary) {
+
+            result.historySummary = summary.historySummary;
+
+        }
+
+        if (Array.isArray(summary?.recommendations)) {
+
+            result.recommendations = summary.recommendations;
+
+        }
+
+        if (summary?.inferredRiskLevel) {
+
+            result.inferredRiskLevel = summary.inferredRiskLevel;
+
+        }
 
         localStorage.setItem('assessmentResult', JSON.stringify(result));
 
@@ -510,6 +563,65 @@ class AssessmentManager {
 
     }
 
+    setQuizLoading(isLoading, message) {
+        const overlay = document.getElementById('quizLoadingIndicator');
+        const text = document.getElementById('quizLoadingText');
+        if (!overlay) return;
+        if (isLoading) {
+            overlay.classList.add('visible');
+            if (text && message) text.textContent = message;
+        } else {
+            overlay.classList.remove('visible');
+        }
+    }
+
+    renderEvaluationSummary(summary) {
+        const card = document.getElementById('quizSummaryCard');
+        const startCard = document.getElementById('quizStartCard');
+        if (!card || !startCard) return;
+        if (!summary) {
+            card.classList.remove('show');
+            startCard.style.display = 'flex';
+            this.updateSummaryNote('');
+            return;
+        }
+        startCard.style.display = 'none';
+        card.classList.add('show');
+        const scoreEl = document.getElementById('summaryScore');
+        if (scoreEl) scoreEl.textContent = typeof summary.finalScore === 'number' ? `${summary.finalScore}` : '--';
+        const riskEl = document.getElementById('summaryRisk');
+        if (riskEl) riskEl.textContent = `Risco ${(summary.inferredRiskLevel || this.quizRiskLevel || '--').toUpperCase()}`;
+        const historyEl = document.getElementById('summaryHistory');
+        if (historyEl) historyEl.textContent = summary.historySummary || 'Resumo nao disponivel.';
+        const recList = document.getElementById('summaryRecommendations');
+        if (recList) {
+            recList.innerHTML = '';
+            if (Array.isArray(summary.recommendations) && summary.recommendations.length) {
+                summary.recommendations.forEach(rec => {
+                    const li = document.createElement('li');
+                    li.textContent = rec;
+                    recList.appendChild(li);
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'Sem recomendacoes adicionais.';
+                recList.appendChild(li);
+            }
+        }
+    }
+
+    updateSummaryNote(message) {
+        const note = document.getElementById('summaryNote');
+        if (!note) return;
+        if (!message) {
+            note.textContent = '';
+            note.style.display = 'none';
+            return;
+        }
+        note.style.display = 'block';
+        note.textContent = message;
+    }
+
 
 
     updateRecordingHint(message) {
@@ -657,6 +769,9 @@ class AssessmentManager {
             this.selectedAnswer = null;
             this.currentQuestionData = null;
             this.pendingResultData = null;
+            this.evaluationSummary = null;
+            this.renderEvaluationSummary(null);
+            this.updateSummaryNote('');
 
             this.quizStarted = true;
 
@@ -709,7 +824,9 @@ class AssessmentManager {
         };
 
         this.isLoadingQuestion = true;
+        this.isSubmittingAnswer = answered;
 
+        this.setQuizLoading(true, answered ? 'Enviando resposta...' : 'Carregando proxima pergunta...');
         this.updateNavButtons();
 
         try {
@@ -727,6 +844,10 @@ class AssessmentManager {
             if (!response.ok) throw new Error('Falha ao obter questao.');
 
             const data = await response.json();
+
+            if (data.evaluationSummary) {
+                this.evaluationSummary = data.evaluationSummary;
+            }
 
             if (answered) {
 
@@ -759,6 +880,7 @@ class AssessmentManager {
             if (data.quizCompleted || !data.nextQuestion) {
 
                 this.pendingResultData = data;
+                if (data.evaluationSummary) this.evaluationSummary = data.evaluationSummary;
 
                 this.handleQuizCompletion();
 
@@ -779,7 +901,9 @@ class AssessmentManager {
         } finally {
 
             this.isLoadingQuestion = false;
+            this.isSubmittingAnswer = false;
 
+            this.setQuizLoading(false);
             this.updateNavButtons();
 
         }
@@ -887,6 +1011,9 @@ class AssessmentManager {
         this.hasCompletedRecording = true;
         this.updateRecordingChip('finished', 'Gravacao finalizada');
         this.updateVideoStatus('<span style="color:#00C853;">Gravacao finalizada</span>');
+        if (this.evaluationSummary) {
+            this.updateSummaryNote('Gravacao concluida. Finalizando avaliacao...');
+        }
         this.tryFinalizeAssessment();
 
     }
@@ -1077,13 +1204,20 @@ class AssessmentManager {
         }
 
         if (next) {
+            next.classList.remove('loading');
             if (!this.currentQuestionData) {
                 next.disabled = true;
                 next.textContent = 'Aguardando...';
             } else {
                 next.style.display = 'block';
-                next.disabled = this.isLoadingQuestion || !this.selectedAnswer;
-                next.textContent = this.remainingQuestions === 0 ? 'Enviar e finalizar' : 'Enviar resposta';
+                if (this.isLoadingQuestion) {
+                    next.disabled = true;
+                    next.textContent = this.isSubmittingAnswer ? 'Enviando resposta...' : 'Carregando...';
+                    next.classList.add('loading');
+                } else {
+                    next.disabled = !this.selectedAnswer;
+                    next.textContent = this.remainingQuestions === 0 ? 'Enviar e finalizar' : 'Enviar resposta';
+                }
             }
         }
 
