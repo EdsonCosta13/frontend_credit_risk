@@ -7,24 +7,11 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupInputMasks() {
-    const cpfInput = document.getElementById('signupCPF');
-    const phoneInput = document.getElementById('signupPhone');
+    const biInput = document.getElementById('signupBI');
 
-    if (cpfInput) {
-        cpfInput.addEventListener('input', (e) => {
-            let v = e.target.value.replace(/\D/g, '').slice(0, 11);
-            v = v.replace(/(\d{3})(\d)/, '$1.$2');
-            v = v.replace(/(\d{3})(\d)/, '$1.$2');
-            v = v.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-            e.target.value = v;
-        });
-    }
-
-    if (phoneInput) {
-        phoneInput.addEventListener('input', (e) => {
-            let v = e.target.value.replace(/\D/g, '').slice(0, 11);
-            v = v.replace(/(\d{2})(\d)/, '($1) $2');
-            v = v.replace(/(\d{5})(\d)/, '$1-$2');
+    if (biInput) {
+        biInput.addEventListener('input', (e) => {
+            let v = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 14);
             e.target.value = v;
         });
     }
@@ -52,12 +39,12 @@ function handleSignin() {
     const password = document.getElementById('signinPassword').value;
 
     if (!email || !password) {
-        alert('Por favor, preencha todos os campos.');
+        Toast.error('Por favor, preencha todos os campos.');
         return;
     }
 
     if (!validateEmail(email)) {
-        alert('Email inválido. Verifique e tente novamente.');
+        Toast.error('Email inválido. Verifique e tente novamente.');
         return;
     }
 
@@ -67,76 +54,75 @@ function handleSignin() {
 
     if (user) {
         localStorage.setItem('currentUser', JSON.stringify(user));
-        window.location.href = 'dashboard.html';
+        Toast.success('Login realizado com sucesso!');
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 1000);
     } else {
-        alert('Email ou senha incorretos. Tente novamente.');
+        Toast.error('Email ou palavra-passe incorretos. Tente novamente.');
     }
 }
 
 function handleSignup() {
     const name = document.getElementById('signupName').value.trim();
+    const bi = document.getElementById('signupBI').value.trim();
     const email = document.getElementById('signupEmail').value.trim();
-    const cpf = document.getElementById('signupCPF').value.trim();
-    const phone = document.getElementById('signupPhone').value.trim();
     const password = document.getElementById('signupPassword').value;
-    const confirmPassword = document.getElementById('signupConfirmPassword').value;
-    const acceptTerms = document.getElementById('acceptTerms').checked;
 
-    if (!name || !email || !cpf || !phone || !password || !confirmPassword) {
-        alert('Por favor, preencha todos os campos.');
+    if (!name || !bi || !email || !password) {
+        Toast.error('Por favor, preencha todos os campos.');
+        return;
+    }
+
+    if (name.length < 3) {
+        Toast.error('O nome deve ter pelo menos 3 caracteres.');
+        return;
+    }
+
+    if (bi.length < 10) {
+        Toast.error('Nº Bilhete de Identidade inválido.');
         return;
     }
 
     if (!validateEmail(email)) {
-        alert('Email inválido. Verifique e tente novamente.');
-        return;
-    }
-
-    if (cpf.length < 14) {
-        alert('CPF inválido. Formato esperado: 000.000.000-00');
-        return;
-    }
-
-    if (phone.length < 14) {
-        alert('Telefone inválido. Formato esperado: (00) 00000-0000');
+        Toast.error('Email inválido. Verifique e tente novamente.');
         return;
     }
 
     if (password.length < 6) {
-        alert('A senha deve ter pelo menos 6 caracteres.');
-        return;
-    }
-
-    if (password !== confirmPassword) {
-        alert('As senhas não coincidem. Tente novamente.');
-        return;
-    }
-
-    if (!acceptTerms) {
-        alert('Você deve aceitar os termos de uso para continuar.');
+        Toast.error('A palavra-passe deve ter pelo menos 6 caracteres.');
         return;
     }
 
     // Check if user exists
     const users = JSON.parse(localStorage.getItem('users') || '[]');
     if (users.find(u => u.email === email)) {
-        alert('Este email já está cadastrado. Faça login ou use outro email.');
+        Toast.error('Este email já está cadastrado. Faça login ou use outro email.');
+        return;
+    }
+
+    if (users.find(u => u.bi === bi)) {
+        Toast.error('Este Bilhete de Identidade já está cadastrado.');
         return;
     }
 
     // Create user
-    const newUser = { id: Date.now(), name, email, cpf, phone, password };
+    const newUser = { id: Date.now(), name, bi, email, password };
     users.push(newUser);
     localStorage.setItem('users', JSON.stringify(users));
 
-    alert('Conta criada com sucesso! Bem-vindo ao CreditScore.');
-    window.location.href = 'signin.html';
+    Toast.success('Conta criada com sucesso! Redirecionando...');
+    setTimeout(() => {
+        window.location.href = 'signin.html';
+    }, 1500);
 }
 
 function handleLogout() {
     if (confirm('Deseja realmente sair?\n\nVocê poderá continuar navegando como visitante.')) {
         localStorage.removeItem('currentUser');
-        // Recarrega a página atual ao invés de redirecionar
-        window.location.reload();
+        Toast.info('Sessão encerrada.');
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
     }
 }
