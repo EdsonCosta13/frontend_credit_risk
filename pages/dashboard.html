@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Painel - CreditScore</title>
     <link rel="stylesheet" href="../css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="panel-layout">
         <!-- Header -->
         <header class="panel-header">
             <div class="header-left">
-                <div class="logo-mark">CS</div>
                 <span class="logo-text">CreditScore</span>
             </div>
             <div class="header-right">
@@ -44,14 +45,14 @@
             <div class="page-header">
                 <div>
                     <h1>Minhas Avaliações</h1>
-                    <p>Gerencie suas avaliações de crédito</p>
+                    <p id="dashboardSubtitle">Acompanhe e gerencie suas avaliações de crédito</p>
                 </div>
                 <button class="btn-primary" onclick="openNewAssessmentModal()">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="12" y1="5" x2="12" y2="19"/>
                         <line x1="5" y1="12" x2="19" y2="12"/>
                     </svg>
-                    Solicitar Avaliação
+                    Nova Avaliação
                 </button>
             </div>
 
@@ -118,9 +119,9 @@
                         </svg>
                     </div>
                     <h3>Nenhuma avaliação encontrada</h3>
-                    <p>Você ainda não realizou nenhuma avaliação de crédito.</p>
+                    <p>Realize sua primeira avaliação de crédito em poucos minutos.</p>
                     <button class="btn-primary" onclick="openNewAssessmentModal()">
-                        Solicitar Primeira Avaliação
+                        Iniciar Primeira Avaliação
                     </button>
                 </div>
             </div>
@@ -140,7 +141,7 @@
                 </button>
             </div>
             <div class="modal-body">
-                <p>Para realizar a avaliação, você precisará:</p>
+                <p>Para realizar sua avaliação de crédito, certifique-se de ter:</p>
                 <div class="modal-requirements">
                     <div class="modal-req-item">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -179,7 +180,7 @@
                         <line x1="12" y1="16" x2="12" y2="12"/>
                         <line x1="12" y1="8" x2="12.01" y2="8"/>
                     </svg>
-                    <span>A avaliação consiste em responder questões enquanto sua entrevista é gravada para análise comportamental.</span>
+                    <span>A avaliação combina um questionário interativo com gravação de vídeo para análise completa do seu perfil de crédito.</span>
                 </div>
             </div>
             <div class="modal-footer">

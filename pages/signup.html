@@ -5,13 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Criar Conta - CreditScore</title>
     <link rel="stylesheet" href="../css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="auth-screen">
         <div class="auth-left">
             <div class="auth-brand">
-                <div class="logo-mark">CS</div>
                 <h1>CreditScore</h1>
                 <p>Avaliação de crédito com análise comportamental em tempo real.</p>
             </div>
@@ -29,36 +30,21 @@
                         <input type="text" id="signupName" placeholder="Seu nome completo">
                     </div>
 
-                    <div class="input-group">
-                        <label for="signupEmail">Email</label>
-                        <input type="email" id="signupEmail" placeholder="seu@email.com">
-                    </div>
-                    
                     <div class="input-row">
                         <div class="input-group">
-                            <label for="signupCPF">CPF</label>
-                            <input type="text" id="signupCPF" placeholder="000.000.000-00" maxlength="14">
+                            <label for="signupBI">Nº Bilhete de Identidade</label>
+                            <input type="text" id="signupBI" placeholder="000000000LA000">
                         </div>
                         <div class="input-group">
-                            <label for="signupPhone">Telefone</label>
-                            <input type="tel" id="signupPhone" placeholder="(00) 00000-0000" maxlength="15">
+                            <label for="signupEmail">Email</label>
+                            <input type="email" id="signupEmail" placeholder="seu@email.com">
                         </div>
                     </div>
                     
                     <div class="input-group">
-                        <label for="signupPassword">Senha</label>
+                        <label for="signupPassword">Palavra-passe</label>
                         <input type="password" id="signupPassword" placeholder="Mínimo 6 caracteres">
                     </div>
-
-                    <div class="input-group">
-                        <label for="signupConfirmPassword">Confirmar Senha</label>
-                        <input type="password" id="signupConfirmPassword" placeholder="Repita a senha">
-                    </div>
-
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="acceptTerms">
-                        <span>Concordo com os <a href="#">Termos de Uso</a> e <a href="#">Política de Privacidade</a></span>
-                    </label>
                 </div>
                 
                 <div class="form-footer">

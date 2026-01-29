@@ -8,16 +8,42 @@ document.addEventListener('DOMContentLoaded', () => {
     initDashboard();
     loadAssessments();
     setupFilterTabs();
+    updateDashboardSubtitle();
 });
+
+function updateDashboardSubtitle() {
+    const user = localStorage.getItem('currentUser');
+    const subtitleEl = document.getElementById('dashboardSubtitle');
+    
+    if (!subtitleEl) return;
+    
+    if (!user) {
+        subtitleEl.innerHTML = 'Acompanhe e gerencie suas avaliações de crédito<br><small style="color: var(--text-muted); font-size: 12px;">Modo Visitante: Suas avaliações serão salvas apenas neste navegador</small>';
+    }
+}
 
 function initDashboard() {
     const user = localStorage.getItem('currentUser');
     if (user) {
-        const userData = JSON.parse(user);
-        document.getElementById('headerUserName').textContent = userData.name.split(' ')[0];
-        document.getElementById('loginLink').style.display = 'none';
-        document.getElementById('signupLink').style.display = 'none';
-        document.getElementById('logoutLink').style.display = 'block';
+        try {
+            const userData = JSON.parse(user);
+            document.getElementById('headerUserName').textContent = userData.name.split(' ')[0];
+            document.getElementById('loginLink').style.display = 'none';
+            document.getElementById('signupLink').style.display = 'none';
+            document.getElementById('logoutLink').style.display = 'block';
+        } catch (e) {
+            // Se houver erro ao parsear, usa visitante
+            document.getElementById('headerUserName').textContent = 'Visitante';
+            document.getElementById('loginLink').style.display = 'block';
+            document.getElementById('signupLink').style.display = 'block';
+            document.getElementById('logoutLink').style.display = 'none';
+        }
+    } else {
+        // Usuário não logado - permite acesso como visitante
+        document.getElementById('headerUserName').textContent = 'Visitante';
+        document.getElementById('loginLink').style.display = 'block';
+        document.getElementById('signupLink').style.display = 'block';
+        document.getElementById('logoutLink').style.display = 'none';
     }
 }
 
@@ -141,7 +167,32 @@ function filterAssessments() {
 }
 
 function openNewAssessmentModal() {
-    document.getElementById('newAssessmentModal').classList.add('show');
+    const modal = document.getElementById('newAssessmentModal');
+    modal.classList.add('show');
+    
+    // Adicionar aviso se for visitante
+    const user = localStorage.getItem('currentUser');
+    const modalInfo = modal.querySelector('.modal-info');
+    
+    if (!user && modalInfo) {
+        const existingWarning = modal.querySelector('.visitor-warning');
+        if (!existingWarning) {
+            const warningDiv = document.createElement('div');
+            warningDiv.className = 'modal-info visitor-warning';
+            warningDiv.style.marginTop = '12px';
+            warningDiv.style.background = 'rgba(255, 179, 0, 0.1)';
+            warningDiv.style.borderColor = 'rgba(255, 179, 0, 0.3)';
+            warningDiv.innerHTML = `
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="16" x2="12" y2="12"/>
+                    <line x1="12" y1="8" x2="12.01" y2="8"/>
+                </svg>
+                <span>Você está no modo visitante. Para salvar permanentemente suas avaliações, <a href="signup.html" style="color: var(--primary); text-decoration: underline;">crie uma conta</a> ou <a href="signin.html" style="color: var(--primary); text-decoration: underline;">faça login</a>.</span>
+            `;
+            modalInfo.parentNode.insertBefore(warningDiv, modalInfo.nextSibling);
+        }
+    }
 }
 
 function closeModal() {
@@ -187,14 +238,14 @@ function closeDetailsModal() {
 }
 
 function confirmDelete(protocol) {
-    if (confirm('Tem certeza que deseja excluir esta avaliação? Esta ação não pode ser desfeita.')) {
+    if (confirm('Tem certeza que deseja excluir esta avaliação?\n\nEsta ação não pode ser desfeita e você perderá todos os dados desta avaliação permanentemente.')) {
         deleteAssessmentByProtocol(protocol);
     }
 }
 
 function deleteAssessment() {
     if (!selectedAssessment) return;
-    if (confirm('Tem certeza que deseja excluir esta avaliação?')) {
+    if (confirm('Tem certeza que deseja excluir esta avaliação?\n\nEsta ação não pode ser desfeita.')) {
         deleteAssessmentByProtocol(selectedAssessment.protocol);
         closeDetailsModal();
     }

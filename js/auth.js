@@ -52,12 +52,12 @@ function handleSignin() {
     const password = document.getElementById('signinPassword').value;
 
     if (!email || !password) {
-        alert('Preencha todos os campos.');
+        alert('Por favor, preencha todos os campos.');
         return;
     }
 
     if (!validateEmail(email)) {
-        alert('Email inválido.');
+        alert('Email inválido. Verifique e tente novamente.');
         return;
     }
 
@@ -69,7 +69,7 @@ function handleSignin() {
         localStorage.setItem('currentUser', JSON.stringify(user));
         window.location.href = 'dashboard.html';
     } else {
-        alert('Email ou senha incorretos.');
+        alert('Email ou senha incorretos. Tente novamente.');
     }
 }
 
@@ -83,22 +83,22 @@ function handleSignup() {
     const acceptTerms = document.getElementById('acceptTerms').checked;
 
     if (!name || !email || !cpf || !phone || !password || !confirmPassword) {
-        alert('Preencha todos os campos.');
+        alert('Por favor, preencha todos os campos.');
         return;
     }
 
     if (!validateEmail(email)) {
-        alert('Email inválido.');
+        alert('Email inválido. Verifique e tente novamente.');
         return;
     }
 
     if (cpf.length < 14) {
-        alert('CPF inválido.');
+        alert('CPF inválido. Formato esperado: 000.000.000-00');
         return;
     }
 
     if (phone.length < 14) {
-        alert('Telefone inválido.');
+        alert('Telefone inválido. Formato esperado: (00) 00000-0000');
         return;
     }
 
@@ -108,19 +108,19 @@ function handleSignup() {
     }
 
     if (password !== confirmPassword) {
-        alert('As senhas não coincidem.');
+        alert('As senhas não coincidem. Tente novamente.');
         return;
     }
 
     if (!acceptTerms) {
-        alert('Você deve aceitar os termos de uso.');
+        alert('Você deve aceitar os termos de uso para continuar.');
         return;
     }
 
     // Check if user exists
     const users = JSON.parse(localStorage.getItem('users') || '[]');
     if (users.find(u => u.email === email)) {
-        alert('Este email já está cadastrado.');
+        alert('Este email já está cadastrado. Faça login ou use outro email.');
         return;
     }
 
@@ -129,11 +129,14 @@ function handleSignup() {
     users.push(newUser);
     localStorage.setItem('users', JSON.stringify(users));
 
-    alert('Conta criada com sucesso!');
+    alert('Conta criada com sucesso! Bem-vindo ao CreditScore.');
     window.location.href = 'signin.html';
 }
 
 function handleLogout() {
-    localStorage.removeItem('currentUser');
-    window.location.href = 'signin.html';
+    if (confirm('Deseja realmente sair?\n\nVocê poderá continuar navegando como visitante.')) {
+        localStorage.removeItem('currentUser');
+        // Recarrega a página atual ao invés de redirecionar
+        window.location.reload();
+    }
 }

@@ -5,13 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resultado - CreditScore</title>
     <link rel="stylesheet" href="../css/styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="result-screen">
         <div class="result-card">
             <div class="result-header">
-                <div class="logo-mark small">CS</div>
+                <span style="font-weight: 600; color: var(--text-primary);">CreditScore</span>
+                <span style="color: var(--text-muted);">•</span>
                 <span>Resultado da Avaliação</span>
             </div>
             <div class="result-body">
@@ -43,8 +46,8 @@
                 </div>
             </div>
             <div class="result-footer">
-                <button class="btn-secondary" onclick="goToDashboard()">Voltar ao Início</button>
-                <button class="btn-primary" onclick="window.print()">Imprimir</button>
+                <button class="btn-secondary" onclick="goToDashboard()">Voltar ao Dashboard</button>
+                <button class="btn-primary" onclick="window.print()">Imprimir Resultado</button>
             </div>
         </div>
     </div>

@@ -3,19 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Avaliador de Confiança de Crédito</title>
+    <title>Avaliação de Crédito - CreditScore</title>
     <link rel="stylesheet" href="../css/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="main-header">
         <div class="header-brand">
-            <div class="logo-mark small">CS</div>
-            <span>Avaliação em Andamento</span>
+            <span class="logo-text">CreditScore</span>
+            <span style="color: var(--text-muted); font-size: 14px; font-weight: 500;">• Avaliação em Andamento</span>
         </div>
         <div class="header-info">
             <div class="recording-badge">
                 <span class="rec-dot"></span>
-                <span>GRAVANDO</span>
+                <span>REC</span>
             </div>
             <div class="timer-badge" id="recordingTimer">00:00</div>
         </div>
@@ -75,26 +78,26 @@
         <div class="quiz-panel">
             <div class="quiz-start-overlay" id="quizStartOverlay">
                 <div class="quiz-start-card" id="quizStartCard">
-                    <h2>Inicie o questionário</h2>
-                    <p>Quando estiver pronto, clique no botão abaixo para começar a responder.</p>
-                    <button class="btn-primary large" id="startQuizBtn">Iniciar quiz</button>
+                    <h2>Iniciar Questionário</h2>
+                    <p>Responda às perguntas com atenção. Suas respostas ajudarão a avaliar seu perfil de crédito de forma precisa.</p>
+                    <button class="btn-primary large" id="startQuizBtn">Começar Questionário</button>
                 </div>
                 <div class="quiz-summary-card" id="quizSummaryCard">
                     <div class="summary-headline">
                         <div>
-                            <span class="summary-label">Pontua��o final</span>
+                            <span class="summary-label">Pontua��o final</span>
                             <div class="summary-score" id="summaryScore">--</div>
                         </div>
                         <span class="summary-risk" id="summaryRisk">Risco --</span>
                     </div>
                     <div class="summary-section">
-                        <h3>Resumo da avalia��ǜo</h3>
+                        <h3>Resumo da avalia��ǜo</h3>
                         <p class="summary-history" id="summaryHistory">Resumo nao disponivel.</p>
                     </div>
                     <div class="summary-section">
-                        <h3>Recomenda��ǜes</h3>
+                        <h3>Recomenda��ǜes</h3>
                         <ul id="summaryRecommendations">
-                            <li>Sem recomenda��ǜes adicionais.</li>
+                            <li>Sem recomenda��ǜes adicionais.</li>
                         </ul>
                     </div>
                     <p class="summary-note" id="summaryNote" style="display: none;"></p>

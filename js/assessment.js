@@ -32,7 +32,6 @@ class AssessmentManager {
         this.isSubmittingAnswer = false;
         this.evaluationSummary = null;
         this.pendingResultData = null;
-        this.apiBase = 'http://localhost:8000';
         this.currentUser = null;
 
         this.questions = [
@@ -114,12 +113,17 @@ class AssessmentManager {
     }
 
     async init() {
-        // Load user if exists
+        // Load user if exists, otherwise use Visitante
         const user = localStorage.getItem('currentUser');
         if (user) {
-            this.currentUser = JSON.parse(user);
+            try {
+                this.currentUser = JSON.parse(user);
+            } catch (e) {
+                this.currentUser = { name: 'Visitante', id: 'guest_' + Date.now() };
+            }
         } else {
-            this.currentUser = { name: 'Visitante' };
+            // Permite acesso sem login
+            this.currentUser = { name: 'Visitante', id: 'guest_' + Date.now() };
         }
 
         // Setup controls
@@ -164,13 +168,13 @@ class AssessmentManager {
 
             console.error('Erro:', error);
 
-            this.updateVideoStatus('Permita o acesso a camera e microfone para continuar.');
+            this.updateVideoStatus('Permita o acesso à câmera e microfone para continuar.');
 
-            this.updateRecordingChip('idle', 'Permissao necessaria');
+            this.updateRecordingChip('idle', 'Permissão necessária');
 
-            this.updateRecordingHint('Permita o acesso a camera e microfone para iniciar.');
+            this.updateRecordingHint('Permita o acesso à câmera e microfone para iniciar a avaliação.');
 
-            alert('Nao foi possivel acessar a camera. Permita o acesso e tente novamente.');
+            alert('Não foi possível acessar a câmera e microfone.\n\nPara realizar a avaliação, você precisa permitir o acesso. Verifique as configurações do seu navegador e tente novamente.');
 
         }
 
@@ -702,7 +706,7 @@ class AssessmentManager {
 
         if (!this.isRecordingActive || !this.mediaRecorder) {
 
-            alert('A gravacao ainda nao iniciou.');
+            alert('A gravação ainda não foi iniciada. Aguarde alguns instantes.');
 
             return;
 
@@ -737,177 +741,176 @@ class AssessmentManager {
     }
 
     async startQuiz() {
-
         if (this.quizStarted) return;
 
         const btn = document.getElementById('startQuizBtn');
-
         if (btn) {
-
             btn.disabled = true;
-
             btn.textContent = 'Iniciando...';
-
         }
 
         try {
-
-            const response = await fetch(`${this.apiBase}/quiz/start`, { method: 'GET' });
-
-            if (!response.ok) throw new Error('Erro ao iniciar quiz');
-
-            const data = await response.json();
-
-            this.sessionId = data.sessionId;
-
+            // Sistema local - sem API
+            this.sessionId = 'LOCAL_' + Date.now();
             localStorage.setItem('quizSessionId', this.sessionId);
 
             this.questionsAnswered = 0;
-            this.totalQuestions = null;
-            this.remainingQuestions = null;
+            this.totalQuestions = this.questions.length;
+            this.remainingQuestions = this.questions.length;
             this.quizHistory = [];
             this.selectedAnswer = null;
             this.currentQuestionData = null;
             this.pendingResultData = null;
             this.evaluationSummary = null;
+            this.quizScore = 0;
+            this.currentQuestion = 0;
             this.renderEvaluationSummary(null);
             this.updateSummaryNote('');
 
             this.quizStarted = true;
 
             const overlay = document.getElementById('quizStartOverlay');
-
             if (overlay) overlay.classList.add('hidden');
 
-            await this.requestNextQuestion();
+            // Carregar primeira questão
+            this.loadLocalQuestion();
 
         } catch (error) {
-
             console.error('Erro ao iniciar quiz:', error);
-
-            alert('Nao foi possivel iniciar o quiz. Tente novamente.');
-
+            alert('Não foi possível iniciar o questionário. Por favor, tente novamente.');
             this.quizStarted = false;
-
         } finally {
-
             if (btn) {
-
                 btn.disabled = false;
-
                 btn.textContent = 'Iniciar quiz';
-
             }
-
         }
-
     }
 
-    async requestNextQuestion(payload = {}) {
-
-        if (!this.sessionId) {
-
-            alert('Sessao do quiz nao encontrada. Inicie novamente.');
-
+    loadLocalQuestion() {
+        if (this.currentQuestion >= this.questions.length) {
+            this.completeQuiz();
             return;
-
         }
 
-        const answered = typeof payload.answer !== 'undefined';
-
-        const body = {
-
-            sessionId: this.sessionId,
-
-            ...payload
-
+        const question = this.questions[this.currentQuestion];
+        this.currentQuestionData = {
+            id: question.id,
+            text: question.text,
+            options: question.options.map(opt => opt.text)
         };
+        
+        this.remainingQuestions = this.questions.length - this.currentQuestion - 1;
+        this.selectedAnswer = null;
+        this.renderQuestion();
+    }
+
+    async submitLocalAnswer() {
+        if (!this.selectedAnswer) {
+            alert('Por favor, selecione uma opção antes de continuar.');
+            return;
+        }
 
         this.isLoadingQuestion = true;
-        this.isSubmittingAnswer = answered;
+        this.isSubmittingAnswer = true;
+        this.setQuizLoading(true, 'Processando resposta...');
 
-        this.setQuizLoading(true, answered ? 'Enviando resposta...' : 'Carregando proxima pergunta...');
-        this.updateNavButtons();
+        // Simular delay de processamento
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        try {
-
-            const response = await fetch(`${this.apiBase}/quiz/answer`, {
-
-                method: 'POST',
-
-                headers: { 'Content-Type': 'application/json' },
-
-                body: JSON.stringify(body)
-
+        const question = this.questions[this.currentQuestion];
+        const selectedOption = question.options.find(opt => opt.text === this.selectedAnswer);
+        
+        if (selectedOption) {
+            this.quizScore += selectedOption.score;
+            this.quizHistory.push({
+                questionId: question.id,
+                answer: this.selectedAnswer,
+                score: selectedOption.score
             });
-
-            if (!response.ok) throw new Error('Falha ao obter questao.');
-
-            const data = await response.json();
-
-            if (data.evaluationSummary) {
-                this.evaluationSummary = data.evaluationSummary;
-            }
-
-            if (answered) {
-
-                this.questionsAnswered += 1;
-
-                this.quizHistory.push({
-
-                    questionId: payload.questionId,
-
-                    answer: payload.answer
-
-                });
-
-            }
-
-            if (typeof data.updatedScore === 'number') this.quizScore = data.updatedScore;
-
-            if (data.inferredRiskLevel) this.quizRiskLevel = data.inferredRiskLevel;
-
-            if (typeof data.remainingQuestions === 'number') {
-
-                this.remainingQuestions = data.remainingQuestions;
-
-                this.totalQuestions = this.questionsAnswered + this.remainingQuestions + 1;
-
-            }
-
-            this.selectedAnswer = null;
-
-            if (data.quizCompleted || !data.nextQuestion) {
-
-                this.pendingResultData = data;
-                if (data.evaluationSummary) this.evaluationSummary = data.evaluationSummary;
-
-                this.handleQuizCompletion();
-
-            } else {
-
-                this.currentQuestionData = data.nextQuestion;
-
-                this.renderQuestion();
-
-            }
-
-        } catch (error) {
-
-            console.error('Erro ao carregar questao:', error);
-
-            alert('Nao foi possivel carregar a proxima questao. Tente novamente.');
-
-        } finally {
-
-            this.isLoadingQuestion = false;
-            this.isSubmittingAnswer = false;
-
-            this.setQuizLoading(false);
-            this.updateNavButtons();
-
         }
 
+        this.questionsAnswered += 1;
+        this.currentQuestion += 1;
+
+        // Calcular nível de risco
+        const maxScore = this.questions.reduce((sum, q) => sum + Math.max(...q.options.map(o => o.score)), 0);
+        const percentage = (this.quizScore / maxScore) * 100;
+        
+        if (percentage >= 70) {
+            this.quizRiskLevel = 'baixo';
+        } else if (percentage >= 40) {
+            this.quizRiskLevel = 'medio';
+        } else {
+            this.quizRiskLevel = 'alto';
+        }
+
+        this.isLoadingQuestion = false;
+        this.isSubmittingAnswer = false;
+        this.setQuizLoading(false);
+
+        // Carregar próxima questão ou finalizar
+        if (this.currentQuestion < this.questions.length) {
+            this.loadLocalQuestion();
+        } else {
+            this.completeQuiz();
+        }
+    }
+
+    completeQuiz() {
+        this.quizStarted = false;
+        this.currentQuestionData = null;
+        this.remainingQuestions = 0;
+        
+        // Gerar resumo de avaliação
+        const maxScore = this.questions.reduce((sum, q) => sum + Math.max(...q.options.map(o => o.score)), 0);
+        const percentage = Math.round((this.quizScore / maxScore) * 100);
+        
+        this.evaluationSummary = {
+            finalScore: percentage,
+            inferredRiskLevel: this.quizRiskLevel,
+            historySummary: `Você respondeu ${this.questionsAnswered} questões e obteve ${this.quizScore} pontos de um total possível de ${maxScore}.`,
+            recommendations: this.generateRecommendations()
+        };
+
+        this.pendingResultData = {
+            evaluationSummary: this.evaluationSummary,
+            updatedScore: percentage,
+            inferredRiskLevel: this.quizRiskLevel
+        };
+
+        this.renderQuestion();
+        const overlay = document.getElementById('quizStartOverlay');
+        if (overlay) {
+            overlay.classList.remove('hidden');
+        }
+
+        this.renderEvaluationSummary(this.evaluationSummary);
+        this.updateSummaryNote(this.hasCompletedRecording
+            ? 'Gravacao concluida. Finalizando avaliacao...'
+            : 'Finalize a gravacao para concluir sua avaliacao.');
+
+        this.tryFinalizeAssessment();
+    }
+
+    generateRecommendations() {
+        const recommendations = [];
+        
+        if (this.quizRiskLevel === 'alto') {
+            recommendations.push('Considere aumentar sua renda mensal antes de solicitar crédito');
+            recommendations.push('Trabalhe na estabilização de seu emprego atual');
+            recommendations.push('Planeje melhor o uso do crédito');
+        } else if (this.quizRiskLevel === 'medio') {
+            recommendations.push('Continue construindo seu histórico financeiro');
+            recommendations.push('Considere fontes de renda adicionais');
+            recommendations.push('Mantenha um plano de pagamento consistente');
+        } else {
+            recommendations.push('Excelente perfil de crédito!');
+            recommendations.push('Continue mantendo seus compromissos financeiros em dia');
+            recommendations.push('Considere oportunidades de investimento');
+        }
+        
+        return recommendations;
     }
 
 
@@ -1229,24 +1232,19 @@ class AssessmentManager {
     }
 
     previousQuestion() {
-        alert('Nao e possivel voltar perguntas neste formato.');
+        alert('Não é possível voltar para questões anteriores.\n\nResponda com atenção antes de avançar.');
     }
 
     async submitCurrentAnswer() {
         if (!this.quizStarted || !this.currentQuestionData) {
-            alert('Inicie o quiz para responder.');
+            alert('Inicie o questionário para responder às perguntas.');
             return;
         }
         if (!this.selectedAnswer) {
-            alert('Selecione uma opcao.');
+            alert('Por favor, selecione uma opção antes de continuar.');
             return;
         }
-        await this.requestNextQuestion({
-            questionId: this.currentQuestionData.id,
-            answer: this.selectedAnswer,
-            currentScore: this.quizScore || 0,
-            history: this.quizHistory
-        });
+        await this.submitLocalAnswer();
     }
 
     submitQuiz() {
@@ -1255,7 +1253,7 @@ class AssessmentManager {
             this.pendingResultData = null;
             return;
         }
-        alert('Finalize o questionario e a gravacao para enviar.');
+        alert('Para finalizar, você precisa:\n\n- Completar todas as questões\n- Concluir a gravação de vídeo\n\nContinue o processo para ver seus resultados.');
     }
 
     captureAvatar() {
